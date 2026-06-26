@@ -1,0 +1,2243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermal Warmup — Solid to Liquid</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Orbitron:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@48,400,0,0">
+    <style>
+/* ── Design tokens ── */
+:root {
+    --bg-color: #050510;
+    --primary: #00f3ff;
+    --primary-dim: rgba(0, 243, 255, 0.1);
+    --secondary: #bc13fe;
+    --secondary-dim: rgba(188, 19, 254, 0.1);
+    --accent: #ffe600;
+    --text-main: #ffffff;
+    --text-muted: #8b9bb4;
+    --glass-bg: rgba(10, 14, 30, 0.65);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --font-ui: 'Inter', sans-serif;
+    --font-heading: 'Orbitron', sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    overflow-y: auto;
+    width: 100vw;
+    height: auto;
+    display: block;
+}
+
+/* ── Thermal game layout ── */
+.thermal-game-container {
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    background: radial-gradient(circle at 50% 10%, #101530 0%, var(--bg-color) 100%);
+    font-family: var(--font-ui);
+    color: var(--text-main);
+}
+
+.thermal-game-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.thermal-content {
+    flex: 1;
+    padding: 1.5rem 2rem 3rem;
+    max-width: 860px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+/* ── Cards ── */
+.thermal-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* ── HUD ── */
+.thermal-hud {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+}
+
+.thermal-hud .hud-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.9rem;
+    font-family: var(--font-heading);
+    letter-spacing: 1px;
+}
+
+.thermal-hud .hud-icon {
+    font-size: 1.1rem;
+}
+
+.thermal-hud .hud-value {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.thermal-hud .hud-buttons {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* ── Buttons ── */
+.thermal-btn {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-muted);
+    padding: 0.4rem 0.8rem;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.thermal-btn:hover,
+.thermal-btn.active {
+    border-color: var(--primary);
+    color: var(--primary);
+    box-shadow: 0 0 10px var(--primary-dim);
+}
+
+.thermal-btn-primary {
+    background: linear-gradient(135deg, var(--secondary) 0%, #8a0db8 100%);
+    border: none;
+    color: white;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px var(--secondary-dim);
+}
+
+.thermal-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px var(--secondary-dim);
+}
+
+.thermal-btn-primary:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.thermal-btn-secondary {
+    background: transparent;
+    border: 1px solid var(--text-muted);
+    color: var(--text-main);
+    padding: 0.7rem 2rem;
+    border-radius: 4px;
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    letter-spacing: 2px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.thermal-btn-secondary:hover {
+    background: var(--primary-dim);
+    border-color: var(--primary);
+    box-shadow: 0 0 15px var(--primary-dim);
+}
+
+/* ── Progress bar ── */
+.thermal-progress-bar {
+    width: 100%;
+    height: 4px;
+    background: #2a3045;
+    border-radius: 2px;
+    margin-top: 0.8rem;
+    overflow: hidden;
+}
+
+.thermal-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary), var(--secondary));
+    border-radius: 2px;
+    transition: width 0.4s ease;
+}
+
+/* ── Game title ── */
+.thermal-game-title {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    text-shadow: 0 0 15px var(--primary-dim);
+}
+
+/* ── Reference table toggle & table ── */
+.thermal-table-toggle {
+    cursor: pointer;
+    color: var(--text-muted);
+    font-family: var(--font-heading);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+
+.thermal-table-toggle:hover { color: var(--primary); }
+
+.thermal-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.72rem;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace;
+}
+
+.thermal-table th {
+    background: var(--primary-dim);
+    color: var(--primary);
+    padding: 0.35rem 0.4rem;
+    text-align: center;
+    font-size: 0.68rem;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+    white-space: nowrap;
+}
+
+.thermal-table td {
+    padding: 0.3rem 0.4rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+}
+
+.thermal-table tr:hover td {
+    background: var(--primary-dim);
+}
+
+/* ── Scenario card ── */
+.thermal-scenario-card {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.thermal-scenario-image {
+    width: 160px;
+    height: 160px;
+    max-width: 160px;
+    max-height: 160px;
+    object-fit: contain;
+    border-radius: 12px;
+    flex-shrink: 0;
+    border: 1px solid var(--glass-border);
+    filter: drop-shadow(0 0 10px rgba(0, 243, 255, 0.15));
+}
+
+.thermal-scenario-details {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: break-word;
+}
+
+.thermal-scenario-card.wide-diagram {
+    flex-direction: column;
+}
+
+.thermal-scenario-card.wide-diagram .thermal-scenario-image {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    max-height: 260px;
+}
+
+.thermal-scenario-details p {
+    color: var(--text-muted);
+    line-height: 1.6;
+}
+
+/* ── Answer card ── */
+.thermal-answer-card {
+    border: 1px solid var(--secondary);
+    box-shadow: 0 0 12px var(--secondary-dim), 0 0 30px rgba(188, 19, 254, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+    position: relative;
+}
+
+.thermal-answer-label {
+    font-family: var(--font-heading);
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--secondary);
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 10px var(--secondary-dim);
+}
+
+.thermal-question-text {
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--primary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 0 12px var(--primary-dim);
+}
+
+/* ── Attempts pips ── */
+.hud-attempts-pips {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+    vertical-align: middle;
+}
+
+.hud-attempts-pips .pip {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow: 0 0 6px var(--primary-dim);
+    transition: all 0.35s ease;
+}
+
+.hud-attempts-pips .pip.used {
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    box-shadow: none;
+    transform: scale(0.75);
+    opacity: 0.4;
+}
+
+.hud-attempts-pips .pip.lost {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+    animation: pip-drain 0.4s ease forwards;
+}
+
+@keyframes pip-drain {
+    0% { background: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.6); transform: scale(1.2); }
+    100% { background: transparent; border: 1px solid var(--glass-border); box-shadow: none; transform: scale(0.75); opacity: 0.4; }
+}
+
+/* ── Answer bar & input ── */
+.thermal-answer-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin-top: 1.25rem;
+}
+
+.thermal-answer-bar .thermal-btn-primary {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+.thermal-input-error {
+    width: 100%;
+    font-size: 0.8rem;
+    color: #ef4444;
+    font-family: var(--font-ui);
+    display: none;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.thermal-input-error.visible {
+    display: flex;
+}
+
+.thermal-input-error .material-symbols-outlined {
+    font-size: 16px;
+    color: #ef4444;
+}
+
+.thermal-input-unit {
+    display: flex;
+    align-items: center;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.thermal-answer-field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    transition: all 0.3s;
+    overflow: hidden;
+}
+
+.thermal-answer-field:focus-within {
+    border-color: var(--primary);
+    box-shadow: 0 0 12px var(--primary-dim);
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.thermal-answer-field:has(.correct) {
+    border-color: #22c55e;
+    box-shadow: 0 0 12px rgba(34, 197, 94, 0.25);
+}
+
+.thermal-answer-field:has(.wrong) {
+    border-color: #ef4444;
+    animation: thermal-shake 0.4s ease;
+}
+
+.thermal-game-input {
+    flex: 1;
+    width: 100%;
+    padding: 0.9rem 1rem;
+    background: transparent;
+    border: none;
+    color: var(--primary);
+    font-family: var(--font-heading);
+    font-size: 1.3rem;
+    outline: none;
+    min-width: 0;
+    -moz-appearance: textfield;
+}
+
+.thermal-game-input::-webkit-outer-spin-button,
+.thermal-game-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.thermal-game-input::placeholder {
+    color: var(--text-muted);
+    opacity: 0.5;
+    font-size: 0.95rem;
+}
+
+.thermal-game-input.correct,
+.thermal-game-input.wrong {
+    border: none;
+    box-shadow: none;
+    animation: none;
+}
+
+@keyframes thermal-shake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-3px); }
+    80% { transform: translateX(3px); }
+}
+
+/* ── Graph card ── */
+#graph-card {
+    opacity: 0;
+    transform: translateY(-12px);
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+#graph-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.thermal-graph-canvas {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: auto;
+    width: 100%;
+    height: 500px;
+    border-radius: 8px;
+    background: rgba(5, 5, 16, 0.95);
+    border: 1px solid var(--glass-border);
+}
+
+/* ── Results ── */
+.thermal-results-score {
+    font-family: var(--font-heading);
+    font-size: 3rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 0 20px var(--primary-dim);
+    letter-spacing: 4px;
+}
+
+.thermal-results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+}
+
+.thermal-result-stat {
+    text-align: center;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.75rem 0.5rem;
+}
+
+.thermal-stat-value {
+    font-family: var(--font-heading);
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary);
+    text-shadow: 0 0 10px var(--primary-dim);
+}
+
+.thermal-stat-label {
+    font-family: var(--font-heading);
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-top: 0.25rem;
+}
+
+.thermal-results-buttons {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-top: 1.5rem;
+}
+
+.thermal-results-buttons .thermal-btn-primary,
+.thermal-results-buttons .thermal-btn-primary {
+    flex: 1;
+    max-width: 200px;
+    padding: 0.85rem 1.5rem;
+    font-size: 0.85rem;
+}
+
+/* ── Feedback overlay ── */
+.thermal-feedback-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    backdrop-filter: blur(4px);
+}
+
+.thermal-feedback-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.thermal-feedback-card {
+    position: relative;
+    background: linear-gradient(135deg, rgba(10, 14, 30, 0.97) 0%, rgba(5, 5, 10, 0.97) 100%);
+    border: none;
+    border-top: 3px solid var(--primary);
+    border-bottom: 3px solid var(--secondary);
+    border-radius: 0;
+    clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+    padding: 2.5rem 2rem 2rem;
+    max-width: 460px;
+    width: 90%;
+    text-align: center;
+    backdrop-filter: blur(20px);
+    box-shadow: 0 0 40px rgba(0, 243, 255, 0.2), 0 0 80px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.thermal-feedback-card::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,0.12), rgba(0,0,0,0.12) 1px, transparent 1px, transparent 3px);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.thermal-feedback-card > * {
+    position: relative;
+    z-index: 1;
+}
+
+.thermal-feedback-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.thermal-feedback-emoji .material-symbols-outlined {
+    font-size: 3rem;
+}
+
+.thermal-feedback-title {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+}
+
+.thermal-feedback-title.correct { color: #22c55e; text-shadow: 0 0 15px rgba(34, 197, 94, 0.4); }
+.thermal-feedback-title.wrong { color: #ef4444; text-shadow: 0 0 15px rgba(239, 68, 68, 0.4); }
+.thermal-feedback-title.reveal { color: var(--accent); text-shadow: 0 0 15px rgba(255, 230, 0, 0.3); }
+.thermal-feedback-title.hint { color: var(--accent); text-shadow: 0 0 15px rgba(255, 230, 0, 0.3); }
+
+.thermal-feedback-body {
+    color: #c8d0dc;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+    font-family: var(--font-ui);
+}
+
+.thermal-feedback-body:empty {
+    display: none;
+}
+
+.thermal-feedback-points {
+    display: inline-block;
+    font-family: var(--font-heading);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+    letter-spacing: 2px;
+    margin-bottom: 0.75rem;
+    text-shadow: 0 0 12px var(--primary-dim);
+}
+
+.thermal-feedback-points .points-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 3px;
+    display: block;
+    margin-top: 0.15rem;
+}
+
+.thermal-feedback-divider {
+    width: 60%;
+    margin: 0.75rem auto;
+    border: none;
+    border-top: 1px solid var(--glass-border);
+}
+
+.thermal-feedback-hint {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--glass-border);
+    border-radius: 8px;
+    padding: 0.7rem 1rem;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.25rem;
+    text-align: left;
+    line-height: 1.6;
+    font-family: var(--font-ui);
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+
+.thermal-feedback-hint .material-symbols-outlined {
+    flex-shrink: 0;
+    margin-top: 2px;
+}
+
+.thermal-feedback-attempts {
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 1rem;
+}
+
+.thermal-feedback-formula {
+    background: rgba(0, 243, 255, 0.04);
+    border: 1px solid rgba(0, 243, 255, 0.1);
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    text-align: left;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+/* ── Points popup & confetti ── */
+.thermal-points-popup {
+    position: fixed;
+    top: 40%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #22c55e;
+    text-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+    animation: thermal-points-rise 1.5s ease-out forwards;
+    pointer-events: none;
+    z-index: 2000;
+    letter-spacing: 3px;
+}
+
+@keyframes thermal-points-rise {
+    0% { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    30% { opacity: 1; transform: translate(-50%, -60%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -120%) scale(1); }
+}
+
+.thermal-confetti-piece {
+    position: fixed;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 2000;
+    animation: thermal-confetti-fall var(--fall-duration, 2s) linear forwards;
+}
+
+@keyframes thermal-confetti-fall {
+    0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+/* ── Level badge (used by results) ── */
+.thermal-level-badge {
+    display: block;
+    width: 100%;
+    padding: 0.75rem 1.2rem;
+    margin-bottom: 0.5rem;
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-family: var(--font-ui);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.thermal-level-badge:hover {
+    border-color: var(--primary);
+    background: var(--primary-dim);
+    box-shadow: 0 0 10px var(--primary-dim);
+}
+
+.thermal-level-badge strong {
+    color: var(--primary);
+    font-family: var(--font-heading);
+    margin-right: 0.5rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 700px) {
+    .thermal-content { padding: 1rem; }
+    .thermal-scenario-card { flex-direction: column; text-align: center; }
+    .thermal-scenario-image { width: 120px; height: 120px; max-width: 120px; max-height: 120px; }
+    .thermal-graph-canvas { height: 300px; }
+}
+
+@media screen and (max-width: 1440px), screen and (max-height: 800px) {
+    .thermal-content { padding: 1rem 1.5rem 2rem; }
+    .thermal-game-title { font-size: 1.1rem; }
+}
+    </style>
+</head>
+<body>
+
+    <div class="thermal-game-container">
+        <div class="thermal-game-main">
+
+            <div class="thermal-content">
+                <div id="screen-game">
+                    <div class="thermal-card" style="padding: 1rem 1.5rem;">
+                        <div class="thermal-hud">
+                            <div class="hud-item"><span id="hud-level" class="hud-value">LEVEL 1</span></div>
+                            <div class="hud-item"><span>SCORE:</span> <span id="hud-score" class="hud-value">0</span></div>
+                            <div class="hud-item"><span>ATTEMPTS:</span> <span id="hud-attempts" class="hud-attempts-pips"></span></div>
+                            <div class="hud-buttons">
+                                <button id="btn-level1" class="thermal-btn" title="Switch to Level 1">L1</button>
+                                <button id="btn-level2" class="thermal-btn" title="Switch to Level 2">L2</button>
+                                <button id="btn-level3" class="thermal-btn" title="Switch to Level 3">L3</button>
+                            </div>
+                        </div>
+                        <div class="thermal-progress-bar"><div id="progress-fill" class="thermal-progress-fill" style="width: 0%"></div></div>
+                    </div>
+
+                    <div style="text-align: center; margin-bottom: 0.5rem;">
+                        <h2 id="game-title" class="thermal-game-title">THERMAL WARMUP — LEVEL 1</h2>
+                    </div>
+
+                    <div class="thermal-card" style="padding: 0.6rem 1rem;">
+                        <div class="thermal-table-toggle" id="game-table-toggle">
+                            <span class="arrow">&#9660;</span> REFERENCE TABLE
+                        </div>
+                        <div id="game-reference-table" style="overflow-x: auto; margin-top: 0.5rem;"></div>
+                    </div>
+
+                    <div class="thermal-card">
+                        <div class="thermal-scenario-card">
+                            <img id="substance-image" class="thermal-scenario-image" alt="Heating apparatus" style="display: none;">
+                            <div id="scenario-text" class="thermal-scenario-details"></div>
+                        </div>
+                    </div>
+
+                    <div id="graph-card" class="thermal-card" style="display: none; padding: 1rem 2rem;">
+                        <canvas id="temp-graph" class="thermal-graph-canvas"></canvas>
+                    </div>
+
+                    <div class="thermal-card thermal-answer-card">
+                        <div class="thermal-answer-label">YOUR ANSWER</div>
+                        <p id="question-text" class="thermal-question-text"></p>
+                        <div class="thermal-answer-bar">
+                            <div class="thermal-answer-field">
+                                <input type="number" id="game-answer-input" class="thermal-game-input" placeholder="Enter your answer..." min="0" max="100000" step="0.1" maxlength="10" autocomplete="off">
+                            </div>
+                            <span id="input-unit" class="thermal-input-unit">seconds</span>
+                            <span id="input-error" class="thermal-input-error"><span class="material-symbols-outlined">error</span> <span id="input-error-msg"></span></span>
+                            <button id="btn-submit" class="thermal-btn-primary">SUBMIT</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RESULTS OVERLAY -->
+                <div id="results-overlay" class="thermal-feedback-overlay">
+                    <div class="thermal-feedback-card" style="max-width: 460px;">
+                        <h2 class="thermal-feedback-title correct" style="margin-bottom: 0.5rem;">LEVEL COMPLETE</h2>
+                        <div id="result-score" class="thermal-results-score">0</div>
+                        <div class="thermal-feedback-attempts" style="margin-bottom: 1rem;">TOTAL SCORE</div>
+                        <div id="results-grid" class="thermal-results-grid"></div>
+                        <div class="thermal-results-buttons">
+                            <button id="btn-replay" class="thermal-btn-primary">PLAY AGAIN</button>
+                            <button id="btn-next-level" class="thermal-btn-primary">NEXT LEVEL</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- FEEDBACK OVERLAY -->
+                <div id="feedback-overlay" class="thermal-feedback-overlay">
+                    <div class="thermal-feedback-card">
+                        <div id="feedback-emoji" class="thermal-feedback-emoji"></div>
+                        <h2 id="feedback-title" class="thermal-feedback-title correct">Correct!</h2>
+                        <p id="feedback-body" class="thermal-feedback-body"></p>
+                        <div id="feedback-hint" class="thermal-feedback-hint" style="display: none;"></div>
+                        <button id="feedback-btn" class="thermal-btn-primary" style="width: 100%;">Continue</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+/* ── ApiService stub (no-op for standalone) ── */
+var ApiService = {
+    saveActivityLog: function() {},
+    getGameConfig: function() { return Promise.resolve(null); }
+};
+
+/* ── Embedded game data (from thermal_warmup.json) ── */
+var GAME_DATA = {
+  "levels": [
+    {
+      "level": 1,
+      "parameters": {
+        "userInput": "time",
+        "predefined": [
+          { "id": "c_water", "name": "Specific Heat of Water", "value": 4184, "unit": "J/(kg·°C)", "type": "float" },
+          { "id": "c_ice", "name": "Specific Heat of Ice", "value": 2090, "unit": "J/(kg·°C)", "type": "float" },
+          { "id": "Lf", "name": "Latent Heat of Fusion (Water)", "value": 334000, "unit": "J/kg", "type": "float" }
+        ],
+        "dynamic": [
+          { "id": "substance", "name": "Substance", "type": "string", "description": "Randomly selected from 7 substances with known thermal properties" },
+          { "id": "mass", "name": "Mass", "unit": "kg", "type": "float", "constraints": { "min": 0.1, "max": 5.0, "step": 0.1 } },
+          { "id": "power", "name": "Heater Power", "unit": "W", "type": "float", "constraints": { "min": 500, "max": 5000, "step": 100 } },
+          { "id": "initial_temp", "name": "Initial Temperature", "unit": "°C", "type": "float", "constraints": { "min": -50, "max": 100 } }
+        ]
+      },
+      "formulae": {
+        "correct": [{ "formula": "t = m × c × ΔT / P", "tolerance": "±5%", "feedback": "Correct! The time to heat depends on mass, specific heat, temperature change, and power." }],
+        "wrong": [
+          { "formula": "t = m × c / P", "feedback": "You forgot the temperature difference ΔT." },
+          { "formula": "t = c × ΔT / P", "feedback": "You forgot to include the mass of the substance." }
+        ]
+      }
+    },
+    {
+      "level": 2,
+      "parameters": {
+        "userInput": "time",
+        "predefined": [],
+        "dynamic": [
+          { "id": "efficiency", "name": "Heating Efficiency", "unit": "%", "type": "float", "constraints": { "min": 50, "max": 95, "step": 5 } }
+        ]
+      },
+      "formulae": {
+        "correct": [{ "formula": "t = m × c × ΔT / (P × η)", "tolerance": "±5%", "feedback": "Correct! With efficiency losses, the effective power is reduced." }],
+        "wrong": [
+          { "formula": "t = m × c × ΔT / P", "feedback": "You forgot to account for the efficiency loss. Not all power goes into heating." },
+          { "formula": "t = m × c × ΔT × η / P", "feedback": "Efficiency should divide the power, not multiply it." }
+        ]
+      }
+    },
+    {
+      "level": 3,
+      "parameters": {
+        "userInput": "power",
+        "predefined": [],
+        "dynamic": [
+          { "id": "time", "name": "Heating Time", "unit": "s", "type": "float" },
+          { "id": "phases", "name": "Heating Phases", "type": "string", "description": "Multi-phase heating including melting (sensible + latent heat)" }
+        ]
+      },
+      "formulae": {
+        "correct": [{ "formula": "P = (m × c_solid × ΔT₁ + m × Lf + m × c_liquid × ΔT₂) / t", "tolerance": "±5%", "feedback": "Correct! The total energy includes sensible heating of solid, latent heat of melting, and sensible heating of liquid." }],
+        "wrong": [
+          { "formula": "P = m × c × ΔT / t", "feedback": "You only accounted for one phase. Multi-phase heating requires summing energy for each phase." },
+          { "formula": "P = m × Lf / t", "feedback": "You only accounted for the phase change. Include the sensible heat terms too." }
+        ]
+      }
+    }
+  ]
+};
+
+/**
+ * Game jointly created by Ho Shen Yong and Google's Antigravity
+ *
+ * Adapted for the Physics-Game frontend platform.
+ *
+ * =====================================================================
+ *  ThermalHC01_Warmup — Heat Capacity Game: Time to Melting Point
+ * =====================================================================
+ *
+ * Level 1: No heat loss. Calculate time to reach melting point.
+ * Formula: t = m × c_solid × (T_melt - T_initial) / Power
+ */
+'use strict';
+
+// ======================================================================
+//  MASTER THERMAL PROPERTIES TABLE
+// ======================================================================
+
+// Inline SVG images — detailed stylized game assets
+const FURNACE_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3CradialGradient id='glow' cx='50%25' cy='50%25' r='50%25'%3E%3Cstop offset='0%25' stop-color='%23ff6600' stop-opacity='0.4'/%3E%3Cstop offset='100%25' stop-color='%23ff6600' stop-opacity='0'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='%230a0e1a'/%3E%3Ccircle cx='100' cy='100' r='70' fill='url(%23glow)'/%3E%3Crect x='35' y='70' width='130' height='90' rx='10' fill='%232d2d2d'/%3E%3Crect x='35' y='70' width='130' height='12' rx='6' fill='%23444'/%3E%3Crect x='50' y='88' width='100' height='55' rx='5' fill='%231a0800'/%3E%3Crect x='65' y='118' width='70' height='18' rx='4' fill='%23ff5500'/%3E%3Crect x='70' y='120' width='60' height='12' rx='3' fill='%23ff8800' opacity='0.8'/%3E%3Cellipse cx='80' cy='105' rx='10' ry='22' fill='%23ff3300' opacity='0.85'/%3E%3Cellipse cx='100' cy='100' rx='12' ry='28' fill='%23ff6600' opacity='0.75'/%3E%3Cellipse cx='120' cy='105' rx='9' ry='20' fill='%23ff9900' opacity='0.7'/%3E%3Cellipse cx='100' cy='95' rx='7' ry='18' fill='%23ffcc00' opacity='0.5'/%3E%3Cellipse cx='90' cy='92' rx='4' ry='10' fill='%23ffee66' opacity='0.4'/%3E%3Ccircle cx='60' cy='78' r='4' fill='%23ff4400' opacity='0.3'/%3E%3Ccircle cx='140' cy='80' r='3' fill='%23ff6600' opacity='0.25'/%3E%3Ccircle cx='85' cy='72' r='2' fill='%23ffaa00' opacity='0.5'/%3E%3Ccircle cx='115' cy='74' r='2.5' fill='%23ff8800' opacity='0.4'/%3E%3Ccircle cx='100' cy='68' r='1.5' fill='%23ffcc00' opacity='0.6'/%3E%3Crect x='42' y='160' width='16' height='12' rx='2' fill='%23333'/%3E%3Crect x='142' y='160' width='16' height='12' rx='2' fill='%23333'/%3E%3C/svg%3E";
+
+const CONTAINER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cdefs%3E%3ClinearGradient id='liq' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%230099dd' stop-opacity='0.3'/%3E%3Cstop offset='100%25' stop-color='%230066aa' stop-opacity='0.5'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='200' height='200' fill='%230a0e1a'/%3E%3Crect x='45' y='148' width='110' height='22' rx='5' fill='%23333' stroke='%23555' stroke-width='1'/%3E%3Ccircle cx='65' cy='163' r='3.5' fill='%23ff3300' opacity='0.8'/%3E%3Ccircle cx='85' cy='163' r='3.5' fill='%23ff5500' opacity='0.6'/%3E%3Ccircle cx='100' cy='163' r='3.5' fill='%23ff3300' opacity='0.8'/%3E%3Ccircle cx='115' cy='163' r='3.5' fill='%23ff5500' opacity='0.6'/%3E%3Ccircle cx='135' cy='163' r='3.5' fill='%23ff3300' opacity='0.8'/%3E%3Cpath d='M68 148 L68 55 Q68 42 82 42 L118 42 Q132 42 132 55 L132 148' fill='none' stroke='%2388ccff' stroke-width='2.5' opacity='0.65'/%3E%3Cpath d='M68 148 L68 55 Q68 42 82 42 L118 42 Q132 42 132 55 L132 148 Z' fill='%2300aaee' opacity='0.06'/%3E%3Crect x='70' y='80' width='60' height='66' fill='url(%23liq)'/%3E%3Ccircle cx='82' cy='120' r='3' fill='%2300ccff' opacity='0.2'/%3E%3Ccircle cx='95' cy='110' r='2' fill='%2300ccff' opacity='0.25'/%3E%3Ccircle cx='110' cy='125' r='2.5' fill='%2300ccff' opacity='0.2'/%3E%3Ccircle cx='88' cy='100' r='1.5' fill='%2300eeff' opacity='0.3'/%3E%3Ccircle cx='118' cy='115' r='2' fill='%2300ddff' opacity='0.2'/%3E%3Crect x='95' y='30' width='3' height='14' rx='1' fill='%23555'/%3E%3Crect x='90' y='28' width='13' height='4' rx='1' fill='%23555'/%3E%3C/svg%3E";
+
+const SUBSTANCES = Object.freeze([
+    {
+        name: 'Ice / Water', key: 'ice',
+        cSolid: 2090, meltPt: 0, Lf: 334,
+        cLiquid: 4184, boilPt: 100, Lv: 2260,
+        type: 'liquid', image: CONTAINER_SVG,
+        tempRange: { low: -20, high: -5 },
+        powerRange: { min: 300, max: 800 }
+    },
+    {
+        name: 'Lead', key: 'lead',
+        cSolid: 128, meltPt: 327, Lf: 23,
+        cLiquid: 147, boilPt: 1749, Lv: 860,
+        type: 'metal', image: FURNACE_SVG,
+        tempRange: { low: 5, high: 30 },
+        powerRange: { min: 500, max: 1500 }
+    },
+    {
+        name: 'Gold', key: 'gold',
+        cSolid: 129, meltPt: 1064, Lf: 63,
+        cLiquid: 163, boilPt: 2856, Lv: 1700,
+        type: 'metal', image: FURNACE_SVG,
+        tempRange: { low: 5, high: 30 },
+        powerRange: { min: 1000, max: 3000 }
+    },
+    {
+        name: 'Silver', key: 'silver',
+        cSolid: 235, meltPt: 962, Lf: 105,
+        cLiquid: 283, boilPt: 2162, Lv: 2300,
+        type: 'metal', image: FURNACE_SVG,
+        tempRange: { low: 5, high: 30 },
+        powerRange: { min: 1000, max: 3000 }
+    },
+    {
+        name: 'Copper', key: 'copper',
+        cSolid: 385, meltPt: 1085, Lf: 206,
+        cLiquid: 495, boilPt: 2562, Lv: 4730,
+        type: 'metal', image: FURNACE_SVG,
+        tempRange: { low: 5, high: 30 },
+        powerRange: { min: 1500, max: 4000 }
+    },
+    {
+        name: 'Aluminium', key: 'aluminium',
+        cSolid: 897, meltPt: 660, Lf: 396,
+        cLiquid: 1180, boilPt: 2470, Lv: 10900,
+        type: 'metal', image: FURNACE_SVG,
+        tempRange: { low: 5, high: 30 },
+        powerRange: { min: 1000, max: 3000 }
+    },
+    {
+        name: 'Mercury', key: 'mercury',
+        cSolid: 139, meltPt: -39, Lf: 11.4,
+        cLiquid: 139, boilPt: 357, Lv: 285,
+        type: 'liquid', image: CONTAINER_SVG,
+        tempRange: { low: -59, high: -44 },
+        powerRange: { min: 100, max: 400 }
+    }
+]);
+
+const GAME_CONFIG = Object.freeze({
+    name: 'ThermalHC01_Warmup',
+    title: 'Thermal Warmup',
+    subtitle: 'Heat Capacity Challenge — Can you predict when things melt?',
+    maxAttempts: 3,
+    questionsPerLevel: 3,
+    tolerancePercent: 5,
+    graphAnimDuration: 5000,
+    massRange: { min: 0.15, max: 1.5 }
+});
+
+// ======================================================================
+//  GAME STATE
+// ======================================================================
+
+let state = {
+    currentLevel: 1,
+    questionNum: 0,
+    score: 0,
+    attemptsLeft: GAME_CONFIG.maxAttempts,
+    questionsAnswered: 0,
+    correctFirstTry: 0,
+    totalAttempts: 0,
+
+    substance: null,
+    mass: 0,
+    tempInitial: 0,
+    power: 0,
+    efficiency: 100,
+    effectivePower: 0,
+    correctTime: 0,
+    correctAnswer: 0,
+    answerUnit: 'seconds',
+    questionType: null,
+    targetTemp: null,
+    givenTime: null,
+    isActive: false,
+
+    graphAnimId: null,
+    graphStartTime: 0,
+    graphHideTimer: null
+};
+
+// ======================================================================
+//  DOM ELEMENTS
+// ======================================================================
+
+const $ = (id) => document.getElementById(id);
+
+function micon(name, size) {
+    const el = document.createElement('span');
+    el.className = 'material-symbols-outlined';
+    el.textContent = name;
+    el.style.fontSize = (size || 18) + 'px';
+    el.style.verticalAlign = 'middle';
+    el.style.marginRight = '4px';
+    return el;
+}
+
+// ======================================================================
+//  UTILITY FUNCTIONS
+// ======================================================================
+
+function randInt(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randFloat(min, max, decimals) {
+    const val = Math.random() * (max - min) + min;
+    return parseFloat(val.toFixed(decimals || 2));
+}
+
+function roundToStep(value, step) {
+    return Math.round(value / step) * step;
+}
+
+function clamp(v, lo, hi) {
+    const n = Number(v);
+    return Number.isFinite(n) ? Math.min(Math.max(n, lo), hi) : lo;
+}
+
+function formatTime(seconds) {
+    if (seconds < 60) return seconds.toFixed(1) + ' s';
+    const m = Math.floor(seconds / 60);
+    const s = (seconds % 60).toFixed(1);
+    return m + ' min ' + s + ' s';
+}
+
+
+// ======================================================================
+//  QUESTION GENERATION
+// ======================================================================
+
+function generateQuestion() {
+    const sub = SUBSTANCES[randInt(0, SUBSTANCES.length - 1)];
+
+    const massKg = roundToStep(randFloat(GAME_CONFIG.massRange.min, GAME_CONFIG.massRange.max, 3), 0.01);
+
+    let tempInit;
+    if (sub.type === 'metal') {
+        tempInit = randInt(sub.tempRange.low, sub.tempRange.high);
+    } else {
+        tempInit = randInt(sub.tempRange.low, sub.tempRange.high);
+    }
+
+    const power = roundToStep(randInt(sub.powerRange.min, sub.powerRange.max), 50);
+
+    let efficiency = 100;
+    if (state.currentLevel >= 2) {
+        if (sub.type === 'metal') {
+            efficiency = roundToStep(randInt(20, 40), 5);
+        } else {
+            efficiency = roundToStep(randInt(50, 80), 5);
+        }
+    }
+
+    const effectivePower = power * (efficiency / 100);
+    const deltaT = sub.meltPt - tempInit;
+
+    let questionType = null;
+    let correctTime = 0;
+    let correctAnswer = 0;
+    let answerUnit = 'seconds';
+    let targetTemp = null;
+    let givenTime = null;
+
+    if (state.currentLevel >= 3) {
+        questionType = 'C';
+
+        const minTarget = sub.meltPt + Math.max(10, (sub.boilPt - sub.meltPt) * 0.1);
+        const maxTarget = sub.meltPt + (sub.boilPt - sub.meltPt) * 0.5;
+        targetTemp = roundToStep(randInt(Math.ceil(minTarget), Math.floor(maxTarget)), 5);
+
+        const Q_solid = massKg * sub.cSolid * deltaT;
+        const Q_melt = massKg * sub.Lf * 1000;
+        const Q_liquid = massKg * sub.cLiquid * (targetTemp - sub.meltPt);
+        const Q_total = Q_solid + Q_melt + Q_liquid;
+
+        const baseTime = Q_total / effectivePower;
+        givenTime = roundToStep(Math.round(baseTime), baseTime > 50 ? 10 : 5);
+        if (givenTime <= 0) givenTime = 5;
+
+        correctAnswer = Q_total / (givenTime * (efficiency / 100));
+        correctTime = givenTime;
+        answerUnit = 'watts';
+    } else {
+        const Q = massKg * sub.cSolid * deltaT;
+        correctTime = Q / effectivePower;
+        correctAnswer = correctTime;
+        answerUnit = 'seconds';
+    }
+
+    return {
+        substance: sub,
+        mass: massKg,
+        tempInitial: tempInit,
+        power: power,
+        efficiency: efficiency,
+        effectivePower: effectivePower,
+        deltaT: deltaT,
+        correctTime: correctTime,
+        correctAnswer: correctAnswer,
+        answerUnit: answerUnit,
+        questionType: questionType,
+        targetTemp: targetTemp,
+        givenTime: givenTime
+    };
+}
+
+// ======================================================================
+//  QUESTION DISPLAY
+// ======================================================================
+
+function showQuestion() {
+    const q = generateQuestion();
+    state.substance = q.substance;
+    state.mass = q.mass;
+    state.tempInitial = q.tempInitial;
+    state.power = q.power;
+    state.efficiency = q.efficiency;
+    state.effectivePower = q.effectivePower;
+    state.correctTime = q.correctTime;
+    state.correctAnswer = q.correctAnswer;
+    state.answerUnit = q.answerUnit;
+    state.questionType = q.questionType;
+    state.targetTemp = q.targetTemp;
+    state.givenTime = q.givenTime;
+    state.attemptsLeft = GAME_CONFIG.maxAttempts;
+
+    const imgEl = $('substance-image');
+    if (imgEl) { imgEl.src = q.substance.image; imgEl.style.display = ''; }
+
+    const scenarioEl = $('scenario-text');
+    if (scenarioEl) {
+        scenarioEl.textContent = '';
+
+        const massG = (q.mass * 1000).toFixed(0);
+        const massDisplay = q.mass >= 1 ? q.mass.toFixed(2) + ' kg' : massG + ' g';
+
+        const line1 = document.createElement('p');
+        line1.textContent = 'You are heating ' + massDisplay + ' of ' + q.substance.name + '.';
+        line1.style.marginBottom = '0.5rem';
+        line1.style.fontSize = '1.05rem';
+        line1.style.fontWeight = '600';
+        line1.style.color = 'var(--text-primary, #e2e8f0)';
+
+        const line2 = document.createElement('p');
+        line2.textContent = 'Initial temperature: ' + q.tempInitial + ' °C';
+        line2.style.marginBottom = '0.25rem';
+
+        if (q.questionType !== 'C') {
+            const line3 = document.createElement('p');
+            line3.textContent = 'Heat supplied: ' + q.power + ' W (J/s)';
+            line3.style.marginBottom = '0.25rem';
+            scenarioEl.appendChild(line1);
+            scenarioEl.appendChild(line2);
+            scenarioEl.appendChild(line3);
+        } else {
+            scenarioEl.appendChild(line1);
+            scenarioEl.appendChild(line2);
+        }
+
+        if (state.currentLevel >= 2) {
+            const heatingMethod = q.substance.type === 'metal' ? 'furnace' : 'heated plate';
+            const line4 = document.createElement('p');
+            line4.textContent = 'Heating method: ' + heatingMethod + ' — only ' + q.efficiency + '% of the heat energy reaches the substance.';
+            line4.style.marginBottom = '0.25rem';
+            line4.style.color = '#f59e0b';
+            line4.style.fontWeight = '600';
+            scenarioEl.appendChild(line4);
+
+            const line5 = document.createElement('p');
+            line5.style.color = '#ef4444';
+            line5.style.fontSize = '0.85rem';
+            line5.style.fontStyle = 'italic';
+            line5.style.marginTop = '0.5rem';
+            const warnIcon5 = micon('warning', 16);
+            warnIcon5.style.color = '#ef4444';
+            line5.appendChild(warnIcon5);
+            line5.appendChild(document.createTextNode('Account for the heat loss in your calculation.'));
+            scenarioEl.appendChild(line5);
+        } else {
+            const line4 = document.createElement('p');
+            line4.style.color = '#f59e0b';
+            line4.style.fontSize = '0.85rem';
+            line4.style.fontStyle = 'italic';
+            line4.style.marginTop = '0.5rem';
+            const warnIcon4 = micon('warning', 16);
+            warnIcon4.style.color = '#f59e0b';
+            line4.appendChild(warnIcon4);
+            line4.appendChild(document.createTextNode('Assume no heat loss to surroundings.'));
+            scenarioEl.appendChild(line4);
+        }
+
+        if (q.questionType === 'C') {
+            const lineTarget = document.createElement('p');
+            lineTarget.textContent = 'Target temperature: ' + q.targetTemp + ' °C (above melting point — substance will fully melt and then continue heating as a liquid)';
+            lineTarget.style.color = '#06b6d4';
+            lineTarget.style.fontWeight = '600';
+            lineTarget.style.marginTop = '0.5rem';
+            scenarioEl.appendChild(lineTarget);
+        }
+
+        if (q.questionType === 'C') {
+            const lineTime = document.createElement('p');
+            lineTime.textContent = 'Required time to reach target temperature: ' + q.givenTime + ' seconds';
+            lineTime.style.color = '#06b6d4';
+            lineTime.style.fontWeight = '600';
+            lineTime.style.marginTop = '0.5rem';
+            scenarioEl.appendChild(lineTime);
+        }
+    }
+
+    const qText = $('question-text');
+    if (qText) {
+        qText.textContent = '';
+        if (q.questionType === 'C') {
+            const icon = micon('electric_bolt');
+            icon.style.color = '#f59e0b';
+            qText.appendChild(icon);
+            qText.appendChild(document.createTextNode('FIND POWER: What total heater power (in watts) is needed to heat the ' + q.substance.name + ' from ' + q.tempInitial + ' °C to ' + q.targetTemp + ' °C in ' + q.givenTime + ' seconds? (Include melting & heat loss!)'));
+        } else {
+            qText.textContent = 'How many seconds will it take for the ' + q.substance.name + ' to reach its melting point?';
+        }
+    }
+
+    const unitLabel = $('input-unit');
+    const input = $('game-answer-input');
+    if (q.answerUnit === 'watts') {
+        if (unitLabel) unitLabel.textContent = 'watts (W)';
+        if (input) input.placeholder = 'Power…';
+    } else {
+        if (unitLabel) unitLabel.textContent = 'seconds';
+        if (input) input.placeholder = 'Time…';
+    }
+
+    updateHUD();
+    renderAttempts();
+
+    clearInputError();
+    if (input) {
+        input.value = '';
+        input.disabled = false;
+        input.classList.remove('correct', 'wrong');
+        setTimeout(() => input.focus(), 100);
+    }
+
+    const btn = $('btn-submit');
+    if (btn) btn.disabled = false;
+
+    hideGraph();
+    hideFeedback();
+}
+
+// ======================================================================
+//  HUD & ATTEMPTS
+// ======================================================================
+
+function updateHUD() {
+    const hudLevel = $('hud-level');
+    if (hudLevel) hudLevel.textContent = 'LEVEL ' + state.currentLevel;
+
+    const hudScore = $('hud-score');
+    if (hudScore) hudScore.textContent = state.score;
+
+    const hudProgress = $('hud-progress-text');
+    if (hudProgress) hudProgress.textContent = state.questionsAnswered + '/' + GAME_CONFIG.questionsPerLevel;
+
+    const fill = $('progress-fill');
+    if (fill) fill.style.width = ((state.questionsAnswered / GAME_CONFIG.questionsPerLevel) * 100) + '%';
+}
+
+function renderAttempts() {
+    const container = $('hud-attempts');
+    if (!container) return;
+    container.textContent = '';
+    for (let i = 0; i < GAME_CONFIG.maxAttempts; i++) {
+        const pip = document.createElement('span');
+        pip.className = 'pip' + (i >= state.attemptsLeft ? ' used' : '');
+        container.appendChild(pip);
+    }
+}
+
+// ======================================================================
+//  GRAPH — Canvas Temperature vs Time
+// ======================================================================
+
+function showGraph(playerTime, playerPower) {
+    playerPower = playerPower || null;
+    const canvas = $('temp-graph');
+    const graphCard = $('graph-card');
+    if (!canvas || !graphCard) return;
+
+    if (state.graphHideTimer) {
+        clearTimeout(state.graphHideTimer);
+        state.graphHideTimer = null;
+    }
+
+    graphCard.style.display = 'block';
+    requestAnimationFrame(() => {
+        graphCard.classList.add('visible');
+        graphCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+
+    canvas.style.width = '100%';
+    canvas.style.height = '500px';
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width;
+    const H = rect.height;
+    const pad = { top: 40, right: 40, bottom: 60, left: 80 };
+    const plotW = W - pad.left - pad.right;
+    const plotH = H - pad.top - pad.bottom;
+
+    const effectivePower = playerPower ? playerPower * (state.efficiency / 100) : state.effectivePower;
+    const sub = state.substance;
+    const tempRate = effectivePower / (state.mass * sub.cSolid);
+
+    const timeToReachMelt = (sub.meltPt - state.tempInitial) / tempRate;
+    const meltDuration = (state.mass * sub.Lf * 1000) / effectivePower;
+    const liquidTempRate = effectivePower / (state.mass * sub.cLiquid);
+    const timeToReachBoil = timeToReachMelt + meltDuration + (sub.boilPt - sub.meltPt) / liquidTempRate;
+    const boilDuration = (state.mass * sub.Lv * 1000) / effectivePower;
+
+    let actualFinalTemp = state.tempInitial;
+    if (playerTime <= timeToReachMelt) {
+        actualFinalTemp = state.tempInitial + tempRate * playerTime;
+    } else if (playerTime <= timeToReachMelt + meltDuration) {
+        actualFinalTemp = sub.meltPt;
+    } else if (playerTime <= timeToReachBoil) {
+        actualFinalTemp = sub.meltPt + liquidTempRate * (playerTime - timeToReachMelt - meltDuration);
+    } else if (playerTime <= timeToReachBoil + boilDuration) {
+        actualFinalTemp = sub.boilPt;
+    } else {
+        actualFinalTemp = sub.boilPt + liquidTempRate * (playerTime - timeToReachBoil - boilDuration);
+    }
+
+    const tMax = playerTime * 1.2;
+    const tempMin = state.tempInitial - 5;
+    let tempMax = Math.max(sub.meltPt + 20, actualFinalTemp + 10);
+    if (state.targetTemp) {
+        tempMax = Math.max(tempMax, state.targetTemp + 20);
+    }
+    if (actualFinalTemp >= sub.boilPt) {
+        tempMax = Math.max(tempMax, sub.boilPt + 20);
+    }
+
+    const xScale = (t) => pad.left + (t / tMax) * plotW;
+    const yScale = (temp) => pad.top + plotH - ((temp - tempMin) / (tempMax - tempMin)) * plotH;
+
+    function getNiceInterval(range, maxTicks) {
+        if (range <= 0) return 1;
+        const rawStep = range / maxTicks;
+        const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
+        const normalizedStep = rawStep / magnitude;
+
+        let niceMulti;
+        if (normalizedStep <= 1) niceMulti = 1;
+        else if (normalizedStep <= 2) niceMulti = 2;
+        else if (normalizedStep <= 5) niceMulti = 5;
+        else niceMulti = 10;
+
+        return niceMulti * magnitude;
+    }
+
+    const tempRange = tempMax - tempMin;
+    const yTickInterval = getNiceInterval(tempRange, 8);
+
+    let animStart = null;
+    const animDuration = GAME_CONFIG.graphAnimDuration;
+
+    function drawFrame(timestamp) {
+        if (!animStart) animStart = timestamp;
+        const elapsed = timestamp - animStart;
+        const progress = Math.min(elapsed / animDuration, 1);
+
+        ctx.clearRect(0, 0, W, H);
+
+        ctx.fillStyle = 'rgba(10, 14, 26, 0.95)';
+        ctx.fillRect(0, 0, W, H);
+
+        ctx.strokeStyle = 'rgba(100, 120, 180, 0.08)';
+        ctx.lineWidth = 1;
+        const yStart = Math.ceil(tempMin / yTickInterval) * yTickInterval;
+        for (let temp = yStart; temp <= tempMax; temp += yTickInterval) {
+            const y = yScale(temp);
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(pad.left + plotW, y);
+            ctx.stroke();
+        }
+
+        ctx.strokeStyle = 'rgba(140, 160, 200, 0.4)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top);
+        ctx.lineTo(pad.left, pad.top + plotH);
+        ctx.lineTo(pad.left + plotW, pad.top + plotH);
+        ctx.stroke();
+
+        ctx.fillStyle = '#8b9bb4';
+        ctx.font = '16px Inter, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Time (s)', pad.left + plotW / 2, H - 10);
+
+        ctx.save();
+        ctx.translate(18, pad.top + plotH / 2);
+        ctx.rotate(-Math.PI / 2);
+        ctx.fillText('Temperature (°C)', 0, 0);
+        ctx.restore();
+
+        ctx.font = '14px Inter, sans-serif';
+        ctx.fillStyle = '#5a6a8a';
+        const xTickInterval = getNiceInterval(tMax, 8);
+        const meltCrossTime = (sub.meltPt - state.tempInitial) / tempRate;
+        for (let t = 0; t <= tMax; t += xTickInterval) {
+            const x = xScale(t);
+            const nearMelt = Math.abs(t - meltCrossTime) < meltCrossTime * 0.15 && t > 0;
+            if (!nearMelt) {
+                ctx.textAlign = 'center';
+                ctx.fillText(t.toFixed(0) + 's', x, pad.top + plotH + 25);
+            }
+            ctx.strokeStyle = 'rgba(100, 120, 180, 0.1)';
+            ctx.beginPath();
+            ctx.moveTo(x, pad.top);
+            ctx.lineTo(x, pad.top + plotH);
+            ctx.stroke();
+        }
+
+        ctx.font = '14px Inter, sans-serif';
+        for (let temp = yStart; temp <= tempMax; temp += yTickInterval) {
+            const y = yScale(temp);
+            ctx.textAlign = 'right';
+            ctx.fillStyle = '#5a6a8a';
+            ctx.fillText(temp.toFixed(0) + '°C', pad.left - 10, y + 4);
+            ctx.strokeStyle = 'rgba(140, 160, 200, 0.3)';
+            ctx.beginPath();
+            ctx.moveTo(pad.left - 5, y);
+            ctx.lineTo(pad.left, y);
+            ctx.stroke();
+        }
+
+        const meltY = yScale(sub.meltPt);
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = '#ef4444';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, meltY);
+        ctx.lineTo(pad.left + plotW, meltY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        ctx.fillStyle = '#ef4444';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('Melting Point: ' + sub.meltPt + '°C', pad.left + plotW - 140, meltY - 8);
+
+        if (tempMax >= sub.boilPt) {
+            const boilY = yScale(sub.boilPt);
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = '#f43f5e';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, boilY);
+            ctx.lineTo(pad.left + plotW, boilY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = '#f43f5e';
+            ctx.font = '13px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Boiling Point: ' + sub.boilPt + '°C', pad.left + plotW - 140, boilY - 8);
+        }
+
+        if (state.targetTemp) {
+            const targetY = yScale(state.targetTemp);
+            ctx.setLineDash([6, 4]);
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(pad.left, targetY);
+            ctx.lineTo(pad.left + plotW, targetY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#06b6d4';
+            ctx.font = '13px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText('Target: ' + state.targetTemp + '°C', pad.left + plotW - 120, targetY - 8);
+        }
+
+        const currentTime = tMax * progress;
+        const timeToFinishMelt = timeToReachMelt + meltDuration;
+
+        ctx.beginPath();
+        ctx.strokeStyle = '#00f3ff';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(0, 200, 255, 0.5)';
+        ctx.shadowBlur = 8;
+
+        if (currentTime <= timeToReachMelt) {
+            ctx.moveTo(xScale(0), yScale(state.tempInitial));
+            ctx.lineTo(xScale(currentTime), yScale(state.tempInitial + tempRate * currentTime));
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            ctx.beginPath();
+            ctx.arc(xScale(currentTime), yScale(state.tempInitial + tempRate * currentTime), 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#00f3ff';
+            ctx.fill();
+
+        } else {
+            ctx.moveTo(xScale(0), yScale(state.tempInitial));
+            ctx.lineTo(xScale(timeToReachMelt), yScale(sub.meltPt));
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            if (currentTime <= timeToFinishMelt) {
+                const plateauEnd = Math.min(currentTime, timeToFinishMelt, playerTime);
+                if (plateauEnd > timeToReachMelt) {
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#f59e0b';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = 'rgba(245, 158, 11, 0.4)';
+                    ctx.shadowBlur = 6;
+                    ctx.moveTo(xScale(timeToReachMelt), yScale(sub.meltPt));
+                    ctx.lineTo(xScale(plateauEnd), yScale(sub.meltPt));
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    if (plateauEnd > timeToReachMelt + 0.5) {
+                        ctx.fillStyle = '#f59e0b';
+                        ctx.font = 'bold 15px Orbitron, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Melting...', xScale((timeToReachMelt + plateauEnd) / 2), yScale(sub.meltPt) - 14);
+                    }
+
+                    ctx.beginPath();
+                    ctx.arc(xScale(plateauEnd), yScale(sub.meltPt), 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.fill();
+                }
+            } else {
+                ctx.beginPath();
+                ctx.strokeStyle = '#f59e0b';
+                ctx.lineWidth = 3;
+                ctx.moveTo(xScale(timeToReachMelt), yScale(sub.meltPt));
+                ctx.lineTo(xScale(timeToFinishMelt), yScale(sub.meltPt));
+                ctx.stroke();
+
+                if (timeToFinishMelt - timeToReachMelt > 0.5) {
+                    ctx.fillStyle = '#f59e0b';
+                    ctx.font = 'bold 15px Orbitron, sans-serif';
+                    ctx.textAlign = 'center';
+                    ctx.fillText('Melting...', xScale((timeToReachMelt + timeToFinishMelt) / 2), yScale(sub.meltPt) - 14);
+                }
+
+                const liquidTime = currentTime - timeToFinishMelt;
+                const timeToReachBoilPhase = (sub.boilPt - sub.meltPt) / liquidTempRate;
+                const boilPhaseStart = timeToFinishMelt + timeToReachBoilPhase;
+                const liquidEndTime = Math.min(currentTime, playerTime, boilPhaseStart);
+
+                ctx.beginPath();
+                ctx.strokeStyle = '#22c55e';
+                ctx.lineWidth = 3;
+                ctx.shadowColor = 'rgba(34, 197, 94, 0.4)';
+                ctx.shadowBlur = 6;
+                ctx.moveTo(xScale(timeToFinishMelt), yScale(sub.meltPt));
+                const actualLiquidTemp = sub.meltPt + liquidTempRate * (liquidEndTime - timeToFinishMelt);
+                ctx.lineTo(xScale(liquidEndTime), yScale(actualLiquidTemp));
+                ctx.stroke();
+                ctx.shadowBlur = 0;
+
+                if (currentTime <= boilPhaseStart && playerTime >= liquidEndTime) {
+                    ctx.beginPath();
+                    ctx.arc(xScale(liquidEndTime), yScale(actualLiquidTemp), 5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#22c55e';
+                    ctx.fill();
+                } else if (currentTime > boilPhaseStart && playerTime > boilPhaseStart) {
+                    const boilingPlateauEnd = Math.min(currentTime, playerTime, boilPhaseStart + boilDuration);
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = '#f43f5e';
+                    ctx.lineWidth = 3;
+                    ctx.shadowColor = 'rgba(244, 63, 94, 0.4)';
+                    ctx.shadowBlur = 6;
+                    ctx.moveTo(xScale(boilPhaseStart), yScale(sub.boilPt));
+                    ctx.lineTo(xScale(boilingPlateauEnd), yScale(sub.boilPt));
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    if (boilingPlateauEnd > boilPhaseStart + 0.5) {
+                        ctx.fillStyle = '#f43f5e';
+                        ctx.font = 'bold 15px Orbitron, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('BOILING!', xScale((boilPhaseStart + boilingPlateauEnd) / 2), yScale(sub.boilPt) - 14);
+                    }
+
+                    if (currentTime <= boilPhaseStart + boilDuration && playerTime >= boilingPlateauEnd) {
+                        ctx.beginPath();
+                        ctx.arc(xScale(boilingPlateauEnd), yScale(sub.boilPt), 5, 0, Math.PI * 2);
+                        ctx.fillStyle = '#f43f5e';
+                        ctx.fill();
+                    } else if (currentTime > boilPhaseStart + boilDuration && playerTime > boilPhaseStart + boilDuration) {
+                        const gasEndTime = Math.min(currentTime, playerTime);
+                        const gasTemp = sub.boilPt + liquidTempRate * (gasEndTime - (boilPhaseStart + boilDuration));
+
+                        ctx.beginPath();
+                        ctx.strokeStyle = '#bc13fe';
+                        ctx.lineWidth = 3;
+                        ctx.shadowColor = 'rgba(168, 85, 247, 0.4)';
+                        ctx.shadowBlur = 6;
+                        ctx.moveTo(xScale(boilPhaseStart + boilDuration), yScale(sub.boilPt));
+                        ctx.lineTo(xScale(gasEndTime), yScale(gasTemp));
+                        ctx.stroke();
+                        ctx.shadowBlur = 0;
+
+                        if (playerTime >= gasEndTime) {
+                            ctx.beginPath();
+                            ctx.arc(xScale(gasEndTime), yScale(gasTemp), 5, 0, Math.PI * 2);
+                            ctx.fillStyle = '#bc13fe';
+                            ctx.fill();
+                        }
+                    }
+                }
+            }
+        }
+
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#e2e8f0';
+        ctx.font = 'bold 16px Orbitron, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Simulated Heating Curve', pad.left + plotW / 2, 20);
+
+        if (progress >= 1) {
+            return;
+        }
+
+        state.graphAnimId = requestAnimationFrame(drawFrame);
+    }
+
+    if (state.graphAnimId) {
+        cancelAnimationFrame(state.graphAnimId);
+    }
+    state.graphAnimId = requestAnimationFrame(drawFrame);
+}
+
+function hideGraph() {
+    if (state.graphAnimId) {
+        cancelAnimationFrame(state.graphAnimId);
+        state.graphAnimId = null;
+    }
+    const graphCard = $('graph-card');
+    if (graphCard) { graphCard.classList.remove('visible'); graphCard.style.display = 'none'; }
+}
+
+// ======================================================================
+//  FEEDBACK
+// ======================================================================
+
+function showFeedback(opts) {
+    const overlay = $('feedback-overlay');
+    const emojiEl = $('feedback-emoji');
+    emojiEl.innerHTML = '';
+    const icon = micon(opts.icon, 48);
+    if (opts.type === 'correct') icon.style.color = '#22c55e';
+    else if (opts.type === 'wrong') icon.style.color = '#ef4444';
+    else if (opts.type === 'reveal') icon.style.color = '#ffe600';
+    emojiEl.appendChild(icon);
+
+    const titleEl = $('feedback-title');
+    titleEl.className = 'thermal-feedback-title ' + opts.type;
+    titleEl.textContent = opts.title;
+
+    const bodyEl = $('feedback-body');
+    bodyEl.innerHTML = '';
+
+    if (opts.points) {
+        const pts = document.createElement('div');
+        pts.className = 'thermal-feedback-points';
+        pts.textContent = '+' + opts.points;
+        const lbl = document.createElement('span');
+        lbl.className = 'points-label';
+        lbl.textContent = 'POINTS';
+        pts.appendChild(lbl);
+        bodyEl.appendChild(pts);
+    }
+
+    if (opts.body) {
+        const p = document.createElement('p');
+        p.style.margin = '0.5rem 0';
+        p.textContent = opts.body;
+        bodyEl.appendChild(p);
+    }
+
+    if (opts.formula) {
+        const f = document.createElement('div');
+        f.className = 'thermal-feedback-formula';
+        f.textContent = opts.formula;
+        bodyEl.appendChild(f);
+    }
+
+    if (opts.attempts !== undefined) {
+        const a = document.createElement('div');
+        a.className = 'thermal-feedback-attempts';
+        a.textContent = opts.attempts + ' ATTEMPT' + (opts.attempts !== 1 ? 'S' : '') + ' REMAINING';
+        bodyEl.appendChild(a);
+    }
+
+    const hint = $('feedback-hint');
+    if (opts.hint) {
+        hint.innerHTML = '';
+        const hintIcon = micon('lightbulb', 16);
+        hintIcon.style.color = 'var(--accent)';
+        hint.appendChild(hintIcon);
+        const hintSpan = document.createElement('span');
+        hintSpan.textContent = opts.hint;
+        hint.appendChild(hintSpan);
+        hint.style.display = 'flex';
+    } else {
+        hint.style.display = 'none';
+    }
+
+    const btn = $('feedback-btn');
+    btn.textContent = opts.btnText;
+    btn.onclick = () => {
+        overlay.classList.remove('show', 'answer-revealed');
+        if (opts.btnAction) opts.btnAction();
+    };
+
+    overlay.classList.remove('show', 'answer-revealed', 'no-blur');
+    if (opts.type === 'reveal') {
+        overlay.classList.add('answer-revealed', 'no-blur');
+    }
+    overlay.classList.add('show');
+}
+
+function hideFeedback() {
+    const overlay = $('feedback-overlay');
+    if (overlay) overlay.classList.remove('show');
+}
+
+function showPointsPopup(points) {
+    const popup = document.createElement('div');
+    popup.className = 'thermal-points-popup';
+    popup.textContent = '+' + points;
+    document.body.appendChild(popup);
+    setTimeout(() => popup.remove(), 1500);
+}
+
+function triggerConfetti() {
+    const colors = ['#00f3ff', '#bc13fe', '#ec4899', '#22c55e', '#f59e0b', '#06b6d4'];
+    for (let i = 0; i < 40; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'thermal-confetti-piece';
+        piece.style.left = (Math.random() * 100) + 'vw';
+        piece.style.top = '-10px';
+        piece.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+        piece.style.setProperty('--fall-duration', (1.5 + Math.random() * 1.5) + 's');
+        piece.style.width = (6 + Math.random() * 8) + 'px';
+        piece.style.height = (6 + Math.random() * 8) + 'px';
+        document.body.appendChild(piece);
+        setTimeout(() => piece.remove(), 3500);
+    }
+}
+
+// ======================================================================
+//  SUBMISSION & VALIDATION
+// ======================================================================
+
+function showInputError(msg) {
+    const el = $('input-error');
+    const msgEl = $('input-error-msg');
+    if (el && msgEl) {
+        msgEl.textContent = msg;
+        el.classList.add('visible');
+    }
+}
+
+function clearInputError() {
+    const el = $('input-error');
+    if (el) el.classList.remove('visible');
+}
+
+function handleSubmit() {
+    const input = $('game-answer-input');
+    if (!input || input.disabled) return;
+    clearInputError();
+
+    const rawValue = input.value.trim();
+
+    const n = parseFloat(rawValue);
+    if (isNaN(n) || !isFinite(n) || n <= 0) {
+        input.classList.add('wrong');
+        setTimeout(() => input.classList.remove('wrong'), 500);
+        const unitMsg = state.answerUnit === 'watts' ? 'power in watts' : 'time in seconds';
+        showInputError('Please enter a positive number (' + unitMsg + ').');
+        return;
+    }
+
+    if (n > state.correctAnswer * 10) {
+        input.classList.add('wrong');
+        setTimeout(() => input.classList.remove('wrong'), 500);
+        showInputError('That seems unreasonably large. Check your calculation.');
+        return;
+    }
+
+    const playerValue = n;
+    const correctAnswer = state.correctAnswer;
+    const tolerance = correctAnswer * (GAME_CONFIG.tolerancePercent / 100);
+    const isCorrect = Math.abs(playerValue - correctAnswer) <= tolerance;
+    const attemptNum = GAME_CONFIG.maxAttempts - state.attemptsLeft + 1;
+
+    // ApiService stub — no-op in standalone mode
+    try {
+        ApiService.saveActivityLog({
+            game_name: 'thermal_warmup',
+            level: state.currentLevel,
+            attempt_number: attemptNum,
+            is_correct: isCorrect,
+            user_answer: playerValue,
+            correct_answer: parseFloat(correctAnswer.toFixed(2)),
+            time_spent: 0
+        });
+    } catch(e) { /* standalone — ignore */ }
+
+    state.totalAttempts++;
+
+    if (state.questionType === 'C') {
+        showGraph(state.givenTime, playerValue);
+    } else {
+        showGraph(playerValue);
+    }
+
+    if (isCorrect) {
+        handleCorrect(attemptNum, playerValue);
+    } else {
+        handleWrong(playerValue, attemptNum);
+    }
+}
+
+function handleCorrect(attemptNum, playerValue) {
+    const points = Math.max(10, (GAME_CONFIG.maxAttempts - attemptNum + 1) * (state.currentLevel * 20));
+    state.score += points;
+    if (attemptNum === 1) state.correctFirstTry++;
+
+    const input = $('game-answer-input');
+    if (input) { input.classList.add('correct'); input.disabled = true; }
+    $('btn-submit').disabled = true;
+
+    const delay = GAME_CONFIG.graphAnimDuration + 500;
+    setTimeout(() => {
+        triggerConfetti();
+        showPointsPopup(points);
+
+        showFeedback({
+            icon: 'check_circle', type: 'correct', title: 'Correct!',
+            points: points,
+            body: 'Accepted within tolerance limits.',
+            btnText: state.questionsAnswered + 1 >= GAME_CONFIG.questionsPerLevel ? 'See Results' : 'Next Question ➡',
+            btnAction: nextQuestion
+        });
+    }, delay);
+}
+
+function getFormulaForType(questionType, level) {
+    if (questionType === 'C') return 'P = (m × c_s × ΔT₁ + m × Lf + m × c_l × ΔT₂) / (t × efficiency)';
+    if (level >= 2) return 't = m × c × ΔT / (P × efficiency)';
+    return 't = m × c × ΔT / P';
+}
+
+function formatAnswer(value, unit) {
+    if (unit === 'watts') return value.toFixed(1) + ' W';
+    return value.toFixed(1) + ' seconds (' + formatTime(value) + ')';
+}
+
+function handleWrong(playerValue, attemptNum) {
+    state.attemptsLeft--;
+
+    const pips = $('hud-attempts').querySelectorAll('.pip');
+    const lostPip = pips[GAME_CONFIG.maxAttempts - state.attemptsLeft - 1];
+    if (lostPip) lostPip.classList.add('lost');
+
+    const input = $('game-answer-input');
+    if (input) {
+        input.classList.add('wrong');
+        setTimeout(() => input.classList.remove('wrong'), 500);
+    }
+
+    let hintText = '';
+    if (state.answerUnit === 'watts') {
+        if (playerValue < state.correctAnswer) {
+            hintText = 'Too low! More power is needed. Try a larger value.';
+        } else {
+            hintText = 'Too high! Less power is needed. Try a smaller value.';
+        }
+    } else {
+        if (playerValue < state.correctAnswer) {
+            hintText = 'Too short! Try a larger value.';
+        } else {
+            hintText = 'Too long! Try a smaller value.';
+        }
+    }
+
+    const delay = GAME_CONFIG.graphAnimDuration + 500;
+    setTimeout(() => {
+        if (state.attemptsLeft <= 0) {
+            if (input) input.disabled = true;
+            $('btn-submit').disabled = true;
+
+            if (state.graphHideTimer) {
+                clearTimeout(state.graphHideTimer);
+                state.graphHideTimer = null;
+            }
+
+            const graphCard = $('graph-card');
+            if (graphCard) { graphCard.style.display = 'block'; graphCard.classList.add('visible'); }
+
+            showFeedback({
+                icon: 'menu_book', type: 'reveal', title: 'Answer Revealed',
+                body: 'The correct answer was ' + formatAnswer(state.correctAnswer, state.answerUnit) + '.',
+                formula: getFormulaForType(state.questionType, state.currentLevel),
+                btnText: state.questionsAnswered + 1 >= GAME_CONFIG.questionsPerLevel ? 'See Results' : 'Next Question ➡',
+                btnAction: nextQuestion
+            });
+        } else {
+            state.graphHideTimer = setTimeout(() => hideGraph(), 3000);
+
+            showFeedback({
+                icon: 'cancel', type: 'wrong', title: 'Not Quite!',
+                hint: hintText,
+                formula: state.attemptsLeft === 1 ? getFormulaForType(state.questionType, state.currentLevel) : null,
+                attempts: state.attemptsLeft,
+                btnText: 'Try Again'
+            });
+        }
+    }, delay);
+}
+
+// ======================================================================
+//  QUESTION FLOW
+// ======================================================================
+
+function nextQuestion() {
+    state.questionsAnswered++;
+    state.questionNum++;
+    updateHUD();
+    hideGraph();
+
+    if (state.questionsAnswered >= GAME_CONFIG.questionsPerLevel) {
+        showResults();
+        return;
+    }
+    showQuestion();
+}
+
+// ======================================================================
+//  SCREENS & LEVELS
+// ======================================================================
+
+function startLevel(level) {
+    state.currentLevel = level;
+    state.questionNum = 0;
+    state.questionsAnswered = 0;
+    state.correctFirstTry = 0;
+    state.totalAttempts = 0;
+    state.attemptsLeft = GAME_CONFIG.maxAttempts;
+
+    const titleEl = $('game-title');
+    if (titleEl) {
+        const subtitles = { 1: 'LEVEL 1', 2: 'LEVEL 2 — HEAT LOSS', 3: 'LEVEL 3 — ADVANCED' };
+        titleEl.textContent = 'THERMAL WARMUP — ' + (subtitles[level] || 'LEVEL ' + level);
+    }
+
+    [1, 2, 3].forEach(n => {
+        const btn = $('btn-level' + n);
+        if (btn) btn.className = 'thermal-btn' + (n === level ? ' active' : '');
+    });
+
+    renderGameTable();
+    showQuestion();
+}
+
+function showResults() {
+    const overlay = $('results-overlay');
+
+    const scoreEl = $('result-score');
+    if (scoreEl) scoreEl.textContent = state.score;
+
+    const grid = $('results-grid');
+    if (grid) {
+        grid.textContent = '';
+
+        const stats = [
+            { value: state.questionsAnswered, label: 'Questions' },
+            { value: state.correctFirstTry, label: 'First Try' },
+            { value: Math.round((state.correctFirstTry / GAME_CONFIG.questionsPerLevel) * 100) + '%', label: 'Accuracy' },
+            { value: state.totalAttempts, label: 'Total Attempts' }
+        ];
+
+        stats.forEach(s => {
+            const div = document.createElement('div');
+            div.className = 'thermal-result-stat';
+            const val = document.createElement('div');
+            val.className = 'thermal-stat-value';
+            val.textContent = s.value;
+            const label = document.createElement('div');
+            label.className = 'thermal-stat-label';
+            label.textContent = s.label;
+            div.appendChild(val);
+            div.appendChild(label);
+            grid.appendChild(div);
+        });
+    }
+
+    const nextBtn = $('btn-next-level');
+    if (nextBtn) {
+        if (state.currentLevel < 3) {
+            nextBtn.style.display = '';
+            nextBtn.textContent = 'NEXT LEVEL';
+        } else {
+            nextBtn.style.display = 'none';
+        }
+    }
+
+    if (overlay) overlay.classList.add('show');
+
+    // ApiService stub — no-op in standalone mode
+    try {
+        ApiService.saveActivityLog({
+            game_name: 'thermal_warmup',
+            level: state.currentLevel,
+            attempt_number: 0,
+            is_correct: true,
+            user_answer: 'level_result',
+            correct_answer: JSON.stringify({
+                score: state.score,
+                questionsAnswered: state.questionsAnswered,
+                correctFirst: state.correctFirstTry,
+                totalAttempts: state.totalAttempts
+            }),
+            time_spent: 0
+        });
+    } catch(e) { /* standalone — ignore */ }
+}
+
+function hideResults() {
+    const overlay = $('results-overlay');
+    if (overlay) overlay.classList.remove('show');
+}
+
+// ======================================================================
+//  EVENT LISTENERS
+// ======================================================================
+
+const submitBtn = $('btn-submit');
+if (submitBtn) submitBtn.addEventListener('click', handleSubmit);
+
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        const input = $('game-answer-input');
+        if (input && document.activeElement === input && !input.disabled) {
+            handleSubmit();
+        }
+    }
+});
+
+const lvl1Btn = $('btn-level1');
+const lvl2Btn = $('btn-level2');
+if (lvl1Btn) lvl1Btn.addEventListener('click', () => { hideResults(); hideFeedback(); hideGraph(); startLevel(1); });
+if (lvl2Btn) lvl2Btn.addEventListener('click', () => { hideResults(); hideFeedback(); hideGraph(); startLevel(2); });
+const lvl3Btn = $('btn-level3');
+if (lvl3Btn) lvl3Btn.addEventListener('click', () => { hideResults(); hideFeedback(); hideGraph(); startLevel(3); });
+
+const replayBtn = $('btn-replay');
+if (replayBtn) replayBtn.addEventListener('click', () => {
+    hideResults();
+    state.score = 0;
+    startLevel(state.currentLevel);
+});
+
+const nextLevelBtn = $('btn-next-level');
+if (nextLevelBtn) nextLevelBtn.addEventListener('click', () => {
+    hideResults();
+    const next = Math.min(state.currentLevel + 1, 3);
+    startLevel(next);
+});
+
+const gameTableToggle = $('game-table-toggle');
+if (gameTableToggle) {
+    gameTableToggle.addEventListener('click', function () {
+        const wrap = $('game-reference-table');
+        if (wrap) {
+            const isHidden = wrap.style.display === 'none';
+            wrap.style.display = isHidden ? 'block' : 'none';
+            const arrow = this.querySelector('.arrow');
+            if (arrow) arrow.textContent = isHidden ? '▼' : '▶';
+        }
+    });
+}
+
+function renderGameTable() {
+    const container = $('game-reference-table');
+    if (!container || container.querySelector('table')) return;
+    const table = document.createElement('table');
+    table.className = 'thermal-table';
+    table.style.marginTop = '0.75rem';
+
+    const thead = document.createElement('thead');
+    const headerRow = document.createElement('tr');
+    ['Substance', 'c_solid (J/kg·°C)', 'Melting Pt (°C)', 'L_f (kJ/kg)',
+     'c_liquid (J/kg·°C)', 'Boiling Pt (°C)', 'L_v (kJ/kg)'].forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement('tbody');
+    SUBSTANCES.forEach(sub => {
+        const row = document.createElement('tr');
+        [sub.name, sub.cSolid, sub.meltPt, sub.Lf,
+         '~' + sub.cLiquid, sub.boilPt, '~' + sub.Lv].forEach((v, i) => {
+            const td = document.createElement('td');
+            td.textContent = String(v);
+            if (i === 0) { td.style.fontWeight = '600'; td.style.textAlign = 'left'; }
+            row.appendChild(td);
+        });
+        tbody.appendChild(row);
+    });
+    table.appendChild(tbody);
+    container.appendChild(table);
+}
+
+// ======================================================================
+//  INIT
+// ======================================================================
+
+renderGameTable();
+startLevel(1);
+    </script>
+</body>
+</html>
